@@ -13,20 +13,23 @@ class AtmScreen extends StatefulWidget {
 }
 
 class _AtmScreenState extends State<AtmScreen> with TickerProviderStateMixin {
-  static const cardAnimationTime = 700;
+  static const cardAnimationTime = 580;
   bool isCardInserted = false;
+  bool isCardInserting = false;
   double cardPositionTop = 370;
   double cardPositionRight = 0;
   double cardWidth = 40;
   double cardImageWidth = 63;
   double receiptHeight = 0;
   int atmTextIndex = 0;
+
   late AnimationController cardIntoATMController;
   late AnimationController printReceiptController;
+  final amountController = TextEditingController();
 
   Future<void> animateCard() async {
-    if (!isCardInserted) {
-      isCardInserted = true;
+    if (!isCardInserting) {
+      isCardInserting = true;
       // 1. Animate card from riqht to left
       setState(() => cardPositionRight = 108);
       // 2. Then bottom to top
@@ -41,34 +44,42 @@ class _AtmScreenState extends State<AtmScreen> with TickerProviderStateMixin {
       await Future.delayed(
           const Duration(milliseconds: cardAnimationTime + 500), () {
         cardIntoATMController.forward();
+        setState(() {});
       });
 
-      // Process receipt
-      animateAtmText(2, msDelay: 1000); // Enter amount text
-      // printReceipt();
+      // 4. Enter amount text
+      animateAtmText(2, msDelay: 1000);
     }
   }
 
-  printReceipt() async {
-    // 4. Print receipt
-    await Future.delayed(const Duration(milliseconds: cardAnimationTime + 50),
-        () {
-      printReceiptController.forward();
-    });
-    // 5. Go to page.
-    await Future.delayed(const Duration(milliseconds: cardAnimationTime + 1000),
-        () {
-      Navigator.pushReplacement(
-        context,
-        CustomPageRoute(
-          child: ReceiptScreen(),
-        ),
-      );
+  /// Animate the text on the ATM.
+  /// Search this AtmTextWidgets variable for the index-widget pair
+  void animateAtmText(int index, {int msDelay = 0}) async {
+    Future.delayed(Duration(milliseconds: msDelay), () {
+      setState(() => atmTextIndex = index);
     });
   }
 
-  initAnimationController() {
-    // 1. Puts card into machine
+  printReceipt() async {
+    // Print receipt
+    await Future.delayed(const Duration(milliseconds: cardAnimationTime + 50),
+            () {
+          printReceiptController.forward();
+        });
+    // Go to page.
+    await Future.delayed(const Duration(milliseconds: cardAnimationTime + 1000),
+            () {
+          Navigator.pushReplacement(
+            context,
+            CustomPageRoute(
+              child: ReceiptScreen(),
+            ),
+          );
+        });
+  }
+
+  initAnimationControllers() {
+    //  Puts card into machine
     cardIntoATMController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -77,13 +88,18 @@ class _AtmScreenState extends State<AtmScreen> with TickerProviderStateMixin {
       setState(() {
         cardImageWidth =
             cardImageWidth - (cardImageWidth * cardIntoATMController.value);
+        if (cardIntoATMController.value >= 0.9) {
+          debugPrint("Card is inserted in machine");
+          isCardInserting = false;
+          isCardInserted = true;
+        }
       });
     });
 
-    // 2. Prints out Recipt
+    // Prints out Recipt
     printReceiptController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 800),
     );
     printReceiptController.addListener(() {
       setState(() {
@@ -93,81 +109,92 @@ class _AtmScreenState extends State<AtmScreen> with TickerProviderStateMixin {
     });
   }
 
-  List<Widget> AtmTextWidgets = [
-    AtmText(
-      key: ValueKey(1),
-      upperText: "Welcome to",
-      lowerText: "Paylo",
-    ),
-    AtmText(
-      key: ValueKey(2),
-      upperText: "Please insert",
-      lowerText: "Your Card",
-      disableTextOut: true,
-    ),
-    SizedBox(
-      key: ValueKey(3),
-      height: 80,
-      width: 100,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            "Enter Amount",
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: Colors.grey[400],
-            ),
-          ),
-          TextField(
-            onChanged: (amount) {},
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: Colors.grey[400],
-            ),
-            autofocus: true,
-            decoration: InputDecoration(
-              prefix: Text(
-                "\$",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.grey[800],
-                ),
-              ),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.only(left: 10),
-            ),
-          ),
-        ],
-      ),
-    ),
-    AtmText(
-      key: ValueKey(4),
-      upperText: "Please insert",
-      lowerText: "Your Card",
-    ),
-  ];
-
-  // AnimateATMtext
-  void animateAtmText(int index, {int msDelay = 0}) async {
-    Future.delayed(Duration(milliseconds: msDelay), () {
-      setState(() => atmTextIndex = index);
-    });
-  }
-
   @override
   void initState() {
-    initAnimationController();
+    initAnimationControllers();
     animateAtmText(1, msDelay: 3000); // Insert card atm text
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
+    List<Widget> AtmTextWidgets = [
+      AtmText(
+        key: ValueKey(1),
+        upperText: "Welcome to",
+        lowerText: "Paylo",
+      ),
+      AtmText(
+        key: ValueKey(2),
+        upperText: "Please insert",
+        lowerText: "Your Card",
+        disableTextOut: true,
+      ),
+      SizedBox(
+        key: ValueKey(3),
+        height: 80,
+        width: 100,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              "Enter Amount",
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: Colors.grey[400],
+              ),
+            ),
+            TextField(
+              controller: amountController,
+              onChanged: (amount) {},
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: Colors.grey[400],
+              ),
+              // autofocus: true,
+              decoration: InputDecoration(
+                prefix: Text(
+                  "\$",
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.grey[800],
+                  ),
+                ),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.only(left: 10),
+              ),
+            ),
+          ],
+        ),
+      ),
+      Center(
+        key: ValueKey(4),
+        child: ShaderMask(
+          shaderCallback: (bounds) => LinearGradient(
+            colors: [
+              Colors.grey.shade400,
+              Colors.grey.shade400,
+              Colors.grey.shade800,
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ).createShader(bounds),
+          child: Text(
+            amountController.text,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: Colors.grey[400],
+            ),
+          ),
+        ),
+      ),
+    ];
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -177,96 +204,133 @@ class _AtmScreenState extends State<AtmScreen> with TickerProviderStateMixin {
                 fontSize: 14,
                 fontWeight: FontWeight.w700)),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.blueGrey[700]),
+          icon: Icon(Icons.arrow_back_ios, color: Colors.blueGrey[700]),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
       ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          SizedBox(
-            height: 440,
-            width: 370,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Image.asset(
-                  'assets/atm.png',
-                  height: 440,
-                ),
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: cardAnimationTime),
-                  top: cardPositionTop,
-                  right: cardPositionRight,
-                  curve: Curves.easeOut,
-                  child: AnimatedContainer(
+      body: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // 1. ATM WIDGETs
+            SizedBox(
+              height: 440,
+              width: 370,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Image.asset(
+                    'assets/atm.png',
+                    height: 440,
+                  ),
+                  AnimatedPositioned(
                     duration: const Duration(milliseconds: cardAnimationTime),
-                    width: cardWidth,
-                    alignment: Alignment.topCenter,
-                    child: RotatedBox(
-                      quarterTurns: 1,
-                      child: AtmCard(
-                        width: cardImageWidth,
-                        height: 37.5,
-                        fit: BoxFit.fitHeight,
+                    top: cardPositionTop,
+                    right: cardPositionRight,
+                    curve: Curves.easeOut,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: cardAnimationTime),
+                      width: cardWidth,
+                      alignment: Alignment.topCenter,
+                      child: RotatedBox(
+                        quarterTurns: 1,
+                        child: AtmCard(
+                          width: cardImageWidth,
+                          height: 37.5,
+                          fit: BoxFit.fitHeight,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                Positioned(
-                  top: 60,
-                  right: 130,
-                  child: SizedBox(
-                    height: 100,
-                    width: 140,
-                    child: AtmTextWidgets[atmTextIndex],
-                  ),
-                ),
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: cardAnimationTime),
-                  top: 83,
-                  right: 108.5,
-                  curve: Curves.easeOut,
-                  child: Hero(
-                    tag: "receipt",
-                    child: Image.asset(
-                      'assets/receipt.png',
-                      height: receiptHeight,
-                      width: 20,
-                      fit: BoxFit.fitWidth,
+                  Positioned(
+                    top: 60,
+                    right: 130,
+                    child: SizedBox(
+                      height: 100,
+                      width: 140,
+                      child: AtmTextWidgets[atmTextIndex],
                     ),
                   ),
-                ),
-                SizedBox(width: double.maxFinite),
-              ],
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: cardAnimationTime),
+                    top: 83,
+                    right: 108.5,
+                    curve: Curves.easeOut,
+                    child: Hero(
+                      tag: "receipt",
+                      child: Image.asset(
+                        'assets/receipt.png',
+                        height: receiptHeight,
+                        width: 20,
+                        fit: BoxFit.fitWidth,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: double.maxFinite),
+                ],
+              ),
             ),
-          ),
-          SizedBox(
-            height: 20,
-          ),
-          SizedBox(
-            height: 35,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                buildMoneyButton("\$100"),
-                buildMoneyButton("\$500"),
-                buildMoneyButton("\$1000"),
-              ],
+
+            // 2. FIXED AMOUNT WIDGETs
+            Container(
+              height: 35,
+              margin: EdgeInsets.only(top: 40, bottom: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  buildMoneyButton("\$ 100", onPressed: () {
+                    setState(() => amountController.text = "100");
+                  }),
+                  buildMoneyButton("\$ 500", onPressed: () {
+                    setState(() => amountController.text = "500");
+                  }),
+                  buildMoneyButton("\$ 1000", onPressed: () {
+                    setState(() => amountController.text = "1000");
+                  }),
+                ],
+              ),
             ),
-          ),
-          CustomButton(
-            title: "Continue",
-            backgroundColor: Colors.green,
-            onPressed: () {
-              animateCard();
-            },
-          ),
-        ],
+            // 3. CONTINUE BUTTON
+            !isCardInserted
+                ? CustomButton(
+                    title: "Insert Card",
+                    backgroundColor: Colors.green,
+                    onPressed: () {
+                      animateCard();
+                    },
+                  )
+                : CustomButton(
+                    title: "Add Money",
+                    backgroundColor: Colors.green,
+                    onPressed: () {
+                      processPayment();
+                    },
+                  ),
+          ],
+        ),
       ),
     );
+  }
+
+  void processPayment() async {
+    if (amountController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Center(child: Text("Please enter an amount")),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 2),
+          // behavior: SnackBarBehavior.floating,
+          // margin: const EdgeInsets.only(top: 10, left: 10, right: 10),
+        ),
+      );
+      return;
+    }
+    animateAtmText(3);
+    await Future.delayed(const Duration(milliseconds: 1000), () {
+      printReceipt();
+    });
   }
 
   TextButton buildMoneyButton(String text, {void Function()? onPressed}) {
@@ -287,7 +351,7 @@ class _AtmScreenState extends State<AtmScreen> with TickerProviderStateMixin {
           const SizedBox(width: 5),
           Icon(
             Icons.arrow_forward_ios,
-            color: Colors.white,
+            color: Colors.grey[300],
             size: 12,
           ),
         ],
@@ -323,9 +387,10 @@ class _AtmTextState extends State<AtmText> {
       setState(() => animatedValue = 0);
     });
     // 2. Animate text out
-    if (!widget.disableTextOut) await Future.delayed(Duration(milliseconds: duration + 1000), () {
-      setState(() => animatedValue = 1);
-    });
+    if (!widget.disableTextOut)
+      await Future.delayed(Duration(milliseconds: duration + 1000), () {
+        setState(() => animatedValue = 1);
+      });
   }
 
   @override

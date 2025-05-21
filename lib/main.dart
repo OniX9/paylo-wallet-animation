@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Paylo animation',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF592505)),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.grey),
       ),
       home: const HomeScreen(),
     );

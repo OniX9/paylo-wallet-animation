@@ -43,6 +43,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+
+// ***SCREEN-ONLY WIDGETS***
+// 1.
 class WalletContainer extends StatefulWidget {
   final Function(bool) onCardInOut;
   const WalletContainer({
@@ -65,9 +68,9 @@ class _WalletContainerState extends State<WalletContainer>
   onDragUpdate(DragUpdateDetails details) {
     double sum = _dragA1ignment.y + (details.delta.dy / 40);
 
-    print("ALIGNMENT: ${_dragA1ignment.y}");
-    print("DELTA CHANGE: ${details.delta.dy / 50}");
-    print("SUM: ${sum}\n\n");
+    // print("ALIGNMENT: ${_dragA1ignment.y}");
+    // print("DELTA CHANGE: ${details.delta.dy / 50}");
+    // print("SUM: ${sum}\n\n");
 
     // Prevent backward and card hidden scrolls
     if (sum >= 0 || isCardHidden) return;
