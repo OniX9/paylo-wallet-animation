@@ -237,6 +237,7 @@ class _AtmScreenState extends State<AtmScreen> with TickerProviderStateMixin {
                       child: RotatedBox(
                         quarterTurns: 1,
                         child: AtmCard(
+                          index: 1,
                           width: cardImageWidth,
                           height: 37.5,
                           fit: BoxFit.fitHeight,

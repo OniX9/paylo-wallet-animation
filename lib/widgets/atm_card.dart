@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AtmCard extends StatelessWidget {
+  final int index;
   final double? width;
   final double? height;
   final BoxFit? fit;
@@ -9,6 +10,7 @@ class AtmCard extends StatelessWidget {
     super.key,
     this.width,
     this.height,
+    this.index = 1,
     this.fit = BoxFit.fitHeight,
   });
 
@@ -25,11 +27,11 @@ class AtmCard extends StatelessWidget {
               end: 0.25,
             ).chain(CurveTween(curve: Curves.easeInOut)),
           ),
-          child: Image.asset('assets/card.png'),
+          child: Image.asset('assets/card1.png'),
         );
       },
       child: Image.asset(
-        'assets/card.png',
+        'assets/card${index+1}.png',
         fit: fit,
         width: width,
         height: height,
