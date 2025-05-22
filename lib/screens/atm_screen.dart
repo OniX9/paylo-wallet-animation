@@ -6,7 +6,9 @@ import 'package:paylo_wallet_animation/widgets/atm_card.dart';
 import 'package:paylo_wallet_animation/widgets/custom_button.dart';
 
 class AtmScreen extends StatefulWidget {
-  const AtmScreen({super.key});
+  final int cardIndex;
+
+  const AtmScreen({super.key, required this.cardIndex});
 
   @override
   State<AtmScreen> createState() => _AtmScreenState();
@@ -154,7 +156,7 @@ class _AtmScreenState extends State<AtmScreen> with TickerProviderStateMixin {
                 fontWeight: FontWeight.w700,
                 color: Colors.grey[400],
               ),
-              // autofocus: true,
+              autofocus: true,
               decoration: InputDecoration(
                 prefix: Text(
                   "\$",
@@ -237,7 +239,7 @@ class _AtmScreenState extends State<AtmScreen> with TickerProviderStateMixin {
                       child: RotatedBox(
                         quarterTurns: 1,
                         child: AtmCard(
-                          index: 1,
+                          index: widget.cardIndex,
                           width: cardImageWidth,
                           height: 37.5,
                           fit: BoxFit.fitHeight,

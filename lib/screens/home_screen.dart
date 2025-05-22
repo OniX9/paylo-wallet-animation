@@ -13,6 +13,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool isCardOut = false;
+  int? cardIndex;
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +23,8 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             WalletContainer(
-              onCardInOut: (isOut) {
+              onCardInOut: (isOut, index) {
+                cardIndex = index;
                 isCardOut = isOut;
               },
             ),
@@ -30,10 +32,12 @@ class _HomeScreenState extends State<HomeScreen> {
               title: "Send Money",
               backgroundColor: Colors.blue.shade400,
               onPressed: () {
-                if (isCardOut)
+                if (isCardOut && cardIndex != null)
                   Navigator.push(
                     context,
-                    CustomPageRoute(child: AtmScreen()),
+                    CustomPageRoute(
+                      child: AtmScreen(cardIndex: cardIndex!),
+                    ),
                   );
               },
             ),
@@ -47,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
 // ***SCREEN-ONLY WIDGETS***
 // 1.
 class WalletContainer extends StatefulWidget {
-  final Function(bool) onCardInOut;
+  final Function(bool, int?) onCardInOut;
   const WalletContainer({
     super.key,
     required this.onCardInOut,
@@ -62,7 +66,7 @@ class _WalletContainerState extends State<WalletContainer>
   bool isCardOut = false;
   bool isCardHidden = true;
   Animation<Alignment>? _animation;
-  late AnimationController _controller;
+  late AnimationController _repositionController;
   var _dragA1ignment = Alignment.center;
   int? draggedCardIndex;
   int? indexOfCardOut;
@@ -87,24 +91,31 @@ class _WalletContainerState extends State<WalletContainer>
     });
   }
 
+  getRecenterAlignment(int index) {
+    return Alignment(
+      Alignment.center.x,
+      Alignment.center.y - (index * 0.25),
+    );
+  }
+
   void onDragEnd(DragEndDetails details, int index) {
     setState(() => draggedCardIndex = index);
     _animation = Tween<Alignment>(
       begin: _dragA1ignment,
-      end: Alignment.center,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-    _controller.forward(from: 0);
+      end:getRecenterAlignment(index),
+    ).animate(CurvedAnimation(parent: _repositionController, curve: Curves.easeOut));
+    _repositionController.forward(from: 0);
     switchCard(_animation);
   }
 
   void switchCard(details) {
-    if (details.value.y <= (isCardOut ? -2.3 : -2.25)) {
+    if (details.value.y <= (isCardOut ? -2.3 : -2.20)) {
       // FINE TUNE TO YOUR NEEDS, TO SWITCH CARD OUTSIDE.
       setState(() {
         isCardOut = !isCardOut;
         indexOfCardOut = indexOfCardOut == null ? draggedCardIndex : null;
-        print('indexOfCardOut: $indexOfCardOut');
-        widget.onCardInOut(isCardOut);
+        // print('indexOfCardOut: $indexOfCardOut');
+        widget.onCardInOut(isCardOut, indexOfCardOut);
       });
     }
   }
@@ -122,7 +133,7 @@ class _WalletContainerState extends State<WalletContainer>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _repositionController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
     )..addListener(() {
@@ -153,7 +164,6 @@ class _WalletContainerState extends State<WalletContainer>
               height: 30,
               width: 130,
               margin: EdgeInsets.only(right: 10, bottom: 25),
-              // color: Colors.blue.withOpacity(0.3),
             ),
           )
         ],
@@ -161,7 +171,7 @@ class _WalletContainerState extends State<WalletContainer>
     );
     Widget secondCard({required int index, required int? draggedCardIndex}) {
       bool isDragged = draggedCardIndex == index;
-      double stackedCardOffset = (index) * 60;
+      double stackedCardOffset = (index) * 45;
       return Transform.rotate(
         angle: isDragged ? -_dragA1ignment.y * 0.0225 : 0,
         alignment: Alignment.bottomCenter,
@@ -173,12 +183,6 @@ class _WalletContainerState extends State<WalletContainer>
               ? EdgeInsets.symmetric(horizontal: 10)
               : EdgeInsets.symmetric(horizontal: 10 * (index + 1)),
           child: GestureDetector(
-            // onVerticalDragStart: (details) {
-            //   print(details.localPosition.dy);
-            //   setState(() {
-            //     currentPosition = details.globalPosition.dy;
-            //   });
-            // },
             onVerticalDragUpdate: (details) {
               onDragUpdate(details, index);
             },
@@ -190,10 +194,7 @@ class _WalletContainerState extends State<WalletContainer>
               // when only one card is being moved
               alignment: isDragged
                   ? _dragA1ignment
-                  : Alignment(
-                      Alignment.center.x,
-                      Alignment.center.y -(index * 0.25),
-                    ),
+                  : getRecenterAlignment(index),
               child: AtmCard(
                 index: index,
               ),
@@ -208,8 +209,6 @@ class _WalletContainerState extends State<WalletContainer>
       child: Container(
         height: 360,
         width: 350,
-        // color: Colors.blue[200],
-        // padding: EdgeInsets.symmetric(horizontal: 15),
         child: Stack(
           alignment: Alignment.bottomCenter,
           children: [
@@ -219,6 +218,7 @@ class _WalletContainerState extends State<WalletContainer>
               width: double.infinity,
               height: 280,
             ),
+            // Card in
             !(indexOfCardOut == 2)
                 ? secondCard(index: 2, draggedCardIndex: draggedCardIndex)
                 : firstCard,
@@ -228,9 +228,7 @@ class _WalletContainerState extends State<WalletContainer>
             !(indexOfCardOut == 0)
                 ? secondCard(index: 0, draggedCardIndex: draggedCardIndex)
                 : firstCard,
-            // !isCardOut
-            //     ? firstCard
-            //     : secondCard(index: draggedCardIndex??0, draggedCardIndex: draggedCardIndex),
+            // Switch card out
             firstCard,
             if (indexOfCardOut != null && isCardOut)
               secondCard(

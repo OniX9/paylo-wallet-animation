@@ -10,14 +10,14 @@ class AtmCard extends StatelessWidget {
     super.key,
     this.width,
     this.height,
-    this.index = 1,
+    required this.index,
     this.fit = BoxFit.fitHeight,
   });
 
   @override
   Widget build(BuildContext context) {
     return Hero(
-      tag: "ATM",
+      tag: "ATM${index+1}",
       flightShuttleBuilder: (flightContext, animation, flightDirection,
           fromHeroContext, toHeroContext) {
         return RotationTransition(
@@ -27,7 +27,7 @@ class AtmCard extends StatelessWidget {
               end: 0.25,
             ).chain(CurveTween(curve: Curves.easeInOut)),
           ),
-          child: Image.asset('assets/card1.png'),
+          child: Image.asset('assets/card${index+1}.png'),
         );
       },
       child: Image.asset(

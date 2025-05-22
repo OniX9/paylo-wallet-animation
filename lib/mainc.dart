@@ -263,13 +263,13 @@
 //                               ),
 //                               child: Padding(
 //                                 padding: const EdgeInsets.symmetric(horizontal: 5.0),
-//                                 child: Image.asset('assets/card1.png'),
+//                                 child: Image.asset('assets/card2.png'),
 //                               ),
 //                             );
 //                           },
 //                           child: Padding(
 //                             padding: const EdgeInsets.symmetric(horizontal: 5.0),
-//                             child: Image.asset('assets/card1.png'),
+//                             child: Image.asset('assets/card2.png'),
 //                           ),
 //                         ),
 //                       ),
@@ -320,13 +320,13 @@
 //                               ),
 //                               child: Padding(
 //                                 padding: const EdgeInsets.symmetric(horizontal: 5.0),
-//                                 child: Image.asset('assets/card1.png'),
+//                                 child: Image.asset('assets/card2.png'),
 //                               ),
 //                             );
 //                           },
 //                           child: Padding(
 //                             padding: const EdgeInsets.symmetric(horizontal: 5.0),
-//                             child: Image.asset('assets/card1.png'),
+//                             child: Image.asset('assets/card2.png'),
 //                           ),
 //                         ),
 //                       ),
@@ -653,7 +653,7 @@
 //                         child: Padding(
 //                           padding: EdgeInsets.symmetric(horizontal: 5),
 //                           child: Image.asset(
-//                             'assets/card1.png',
+//                             'assets/card2.png',
 //                             height:  160,
 //                           ),
 //                         ),
